@@ -1,12 +1,37 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { LoginScreen } from "@/components/LoginScreen";
+import { TabNavigation } from "@/components/TabNavigation";
+import { InboxView } from "@/components/InboxView";
+import { QueueView } from "@/components/QueueView";
+import { SettingsView } from "@/components/SettingsView";
 
 const Index = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState("inbox");
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
+
+  const renderActiveView = () => {
+    switch (activeTab) {
+      case "inbox":
+        return <InboxView />;
+      case "queue":
+        return <QueueView />;
+      case "settings":
+        return <SettingsView />;
+      default:
+        return <InboxView />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <main className="flex-1 pb-20">
+        {renderActiveView()}
+      </main>
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
