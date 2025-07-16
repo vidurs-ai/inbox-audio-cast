@@ -1,5 +1,6 @@
 import { PlaybackControls } from "@/components/PlaybackControls";
 import { QueueItem } from "@/components/QueueItem";
+import { useAudioStore } from "@/stores/audioStore";
 
 // Mock queue data for development
 const mockQueue = [
@@ -30,7 +31,8 @@ const mockQueue = [
 ];
 
 export const QueueView = () => {
-  const currentEmail = mockQueue.find(item => item.isPlaying);
+  const { queue, currentEmailId, isPlaying } = useAudioStore();
+  const currentEmail = queue.find(item => item.id === currentEmailId);
 
   return (
     <div className="p-4 space-y-6">
@@ -45,19 +47,17 @@ export const QueueView = () => {
               </h2>
               <p className="text-muted-foreground">{currentEmail.sender}</p>
             </div>
-            <PlaybackControls 
-              isPlaying={true}
-              progress={currentEmail.progress}
-              duration={currentEmail.duration}
-            />
+            <PlaybackControls />
           </div>
         </div>
       )}
       
       <div className="space-y-2">
-        <h3 className="text-lg font-medium text-foreground">Up Next</h3>
+        <h3 className="text-lg font-medium text-foreground">
+          Queue ({queue.length} emails)
+        </h3>
         <div className="space-y-2">
-          {mockQueue.filter(item => !item.isPlaying).map((item) => (
+          {queue.map((item) => (
             <QueueItem key={item.id} item={item} />
           ))}
         </div>

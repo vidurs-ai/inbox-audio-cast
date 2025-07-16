@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Plus } from "lucide-react";
+import { useAudioStore } from "@/stores/audioStore";
 
 interface Email {
   id: string;
@@ -17,6 +18,30 @@ interface EmailCardProps {
 }
 
 export const EmailCard = ({ email }: EmailCardProps) => {
+  const { addToQueue, playEmail } = useAudioStore();
+
+  const handlePlayNow = () => {
+    const emailData = {
+      id: email.id,
+      sender: email.sender,
+      subject: email.subject,
+      content: email.preview,
+      isRead: false
+    };
+    playEmail(emailData);
+  };
+
+  const handleAddToQueue = () => {
+    const emailData = {
+      id: email.id,
+      sender: email.sender,
+      subject: email.subject,
+      content: email.preview,
+      isRead: false
+    };
+    addToQueue(emailData);
+  };
+
   return (
     <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
       <div className="flex items-start space-x-3">
@@ -40,10 +65,20 @@ export const EmailCard = ({ email }: EmailCardProps) => {
         </div>
         
         <div className="flex flex-col space-y-2">
-          <Button size="sm" variant="outline" className="h-8 w-8 p-0">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="h-8 w-8 p-0"
+            onClick={handlePlayNow}
+          >
             <Play className="h-3 w-3" />
           </Button>
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="h-8 w-8 p-0"
+            onClick={handleAddToQueue}
+          >
             <Plus className="h-3 w-3" />
           </Button>
         </div>
