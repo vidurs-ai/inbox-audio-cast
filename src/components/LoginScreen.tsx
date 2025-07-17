@@ -6,20 +6,23 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
-  const handleGoogleLogin = () => {
-    const clientId = "YOUR_GOOGLE_CLIENT_ID"; // You'll need to set this
-    const redirectUri = `${window.location.origin}/auth/callback`;
-    const scope = "https://www.googleapis.com/auth/gmail.readonly";
-    
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `response_type=code&` +
-      `scope=${encodeURIComponent(scope)}&` +
-      `access_type=offline&` +
-      `prompt=consent`;
-    
-    window.location.href = authUrl;
+  const handleGoogleLogin = async () => {
+    try {
+      // Get the auth URL from our edge function
+      const response = await fetch(`https://bqazfwlwlatzmaibbvrr.supabase.co/functions/v1/auth-google`, {
+        method: 'GET',
+      });
+
+      const data = await response.json();
+      
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('Failed to get auth URL');
+      }
+    } catch (error) {
+      console.error('Error initiating Google auth:', error);
+    }
   };
 
   return (

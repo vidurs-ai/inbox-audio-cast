@@ -1,5 +1,8 @@
 project_id = "bqazfwlwlatzmaibbvrr"
 
+[functions.auth-google]
+verify_jwt = false
+
 [functions.gmail-oauth]
 verify_jwt = false
 
