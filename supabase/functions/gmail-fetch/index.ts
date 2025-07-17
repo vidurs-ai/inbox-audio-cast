@@ -111,7 +111,7 @@ serve(async (req) => {
         emails.push({
           id: message.id,
           sender: getHeader('From').replace(/<.*>/, '').trim(),
-          senderEmail: getHeader('From').match(/<(.+)>/)?.1 || getHeader('From'),
+          senderEmail: getHeader('From').match(/<(.+)>/)?.[1] || getHeader('From'),
           subject: getHeader('Subject'),
           preview: body.slice(0, 100) + '...',
           timestamp: new Date(parseInt(messageData.internalDate)).toLocaleString(),
