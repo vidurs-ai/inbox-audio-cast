@@ -6,6 +6,22 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
+  const handleGoogleLogin = () => {
+    const clientId = "YOUR_GOOGLE_CLIENT_ID"; // You'll need to set this
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const scope = "https://www.googleapis.com/auth/gmail.readonly";
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `response_type=code&` +
+      `scope=${encodeURIComponent(scope)}&` +
+      `access_type=offline&` +
+      `prompt=consent`;
+    
+    window.location.href = authUrl;
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-8 text-center">
@@ -30,11 +46,11 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
         {/* Login Button */}
         <div className="space-y-4">
           <Button
-            onClick={onLogin}
+            onClick={handleGoogleLogin}
             className="w-full h-12 text-base font-medium rounded-xl"
             size="lg"
           >
-            Continue with Google
+            Continue with Gmail
           </Button>
           
           <p className="text-sm text-muted-foreground px-4">
