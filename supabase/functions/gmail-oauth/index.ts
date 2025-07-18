@@ -59,6 +59,10 @@ serve(async (req) => {
 
     const profile = await profileResponse.json();
 
+    if (!profile.email) {
+      throw new Error('No email received from Google');
+    }
+
     // Create or update user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: profile.email,

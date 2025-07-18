@@ -19,12 +19,11 @@ export const AuthCallback = () => {
         }
 
         // Exchange code for tokens via our edge function
-        const { data, error } = await supabase.functions.invoke('gmail-oauth', {
-          body: { code, state },
-        });
+        const response = await fetch(`${window.location.origin.replace('localhost:3000', 'bqazfwlwlatzmaibbvrr.supabase.co')}/functions/v1/gmail-oauth?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state || '')}`);
+        const data = await response.json();
 
-        if (error) {
-          throw new Error(error.message);
+        if (!response.ok || data.error) {
+          throw new Error(data.error || 'Authentication failed');
         }
 
         if (data.session_url) {
