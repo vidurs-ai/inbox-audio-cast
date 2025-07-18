@@ -18,7 +18,7 @@ serve(async (req) => {
     }
 
     const redirectUri = `https://bqazfwlwlatzmaibbvrr.supabase.co/functions/v1/gmail-oauth`;
-    const scope = "https://www.googleapis.com/auth/gmail.readonly";
+    const scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
     
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${clientId}&` +

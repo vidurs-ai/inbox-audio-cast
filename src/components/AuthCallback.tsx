@@ -18,20 +18,9 @@ export const AuthCallback = () => {
           throw new Error('No authorization code received');
         }
 
-        // Exchange code for tokens via our edge function
-        const response = await fetch(`${window.location.origin.replace('localhost:3000', 'bqazfwlwlatzmaibbvrr.supabase.co')}/functions/v1/gmail-oauth?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state || '')}`);
-        const data = await response.json();
-
-        if (!response.ok || data.error) {
-          throw new Error(data.error || 'Authentication failed');
-        }
-
-        if (data.session_url) {
-          // Use the session URL to authenticate
-          window.location.href = data.session_url;
-        } else {
-          navigate('/');
-        }
+        // The OAuth function now handles the redirect directly
+        // If we get here, something went wrong
+        throw new Error('OAuth flow completed but no redirect occurred');
       } catch (error) {
         console.error('OAuth callback error:', error);
         toast({

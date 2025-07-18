@@ -94,13 +94,25 @@ serve(async (req) => {
       throw new Error('Failed to generate session');
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      user: authData.user,
-      session_url: sessionData.properties?.action_link,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Redirect to the app with the session URL
+    if (sessionData.properties?.action_link) {
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': sessionData.properties.action_link,
+        },
+      });
+    } else {
+      // Fallback: redirect to the app homepage
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': 'https://preview--inbox-audio-cast.lovable.app/',
+        },
+      });
+    }
 
   } catch (error) {
     console.error('Gmail OAuth error:', error);
