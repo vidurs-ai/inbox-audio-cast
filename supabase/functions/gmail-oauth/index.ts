@@ -17,7 +17,9 @@ serve(async (req) => {
   }
 
   try {
-    const { code, state } = await req.json();
+    const url = new URL(req.url);
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
     
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
