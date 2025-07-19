@@ -63,25 +63,54 @@ serve(async (req) => {
       throw new Error('No email received from Google');
     }
 
-    // Create or update user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: profile.email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: profile.name,
-        avatar_url: profile.picture,
-        provider: 'google',
-        gmail_tokens: {
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
-          expires_at: Date.now() + (tokenData.expires_in * 1000),
-        },
-      },
-    });
+    // Try to get existing user first
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(user => user.email === profile.email);
 
-    if (authError) {
-      console.error('Auth error:', authError);
-      throw new Error('Failed to create user');
+    let authData;
+    if (existingUser) {
+      // Update existing user's metadata
+      const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
+        user_metadata: {
+          ...existingUser.user_metadata,
+          full_name: profile.name,
+          avatar_url: profile.picture,
+          provider: 'google',
+          gmail_tokens: {
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            expires_at: Date.now() + (tokenData.expires_in * 1000),
+          },
+        },
+      });
+      
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw new Error('Failed to update user');
+      }
+      authData = updateData;
+    } else {
+      // Create new user
+      const { data: createData, error: createError } = await supabase.auth.admin.createUser({
+        email: profile.email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: profile.name,
+          avatar_url: profile.picture,
+          provider: 'google',
+          gmail_tokens: {
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            expires_at: Date.now() + (tokenData.expires_in * 1000),
+          },
+        },
+      });
+
+      if (createError) {
+        console.error('Create error:', createError);
+        throw new Error('Failed to create user');
+      }
+      authData = createData;
     }
 
     // Generate session token
