@@ -134,11 +134,12 @@ serve(async (req) => {
       });
     } else {
       // Fallback: redirect to the app homepage
+      const appUrl = 'https://a40028af-14d4-4078-a89d-803b3a984f7d.lovableproject.com/';
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': 'https://preview--inbox-audio-cast.lovable.app/',
+          'Location': appUrl,
         },
       });
     }
