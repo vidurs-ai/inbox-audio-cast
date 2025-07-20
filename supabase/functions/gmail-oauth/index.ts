@@ -113,30 +113,32 @@ serve(async (req) => {
       authData = createData;
     }
 
-    // Generate session token
-    const appUrl = 'https://a40028af-14d4-4078-a89d-803b3a984f7d.lovableproject.com/';
+    // Create a session for the user
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: profile.email,
-      redirectTo: appUrl,
     });
 
     if (sessionError) {
       throw new Error('Failed to generate session');
     }
 
-    // Redirect to the app with the session URL
+    // Extract the tokens from the magic link and redirect to our app URL
+    const appUrl = 'https://a40028af-14d4-4078-a89d-803b3a984f7d.lovableproject.com/';
     if (sessionData.properties?.action_link) {
+      const magicLinkUrl = new URL(sessionData.properties.action_link);
+      const hashParams = magicLinkUrl.hash.substring(1); // Remove the #
+      
+      // Redirect to our app with the auth tokens
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': sessionData.properties.action_link,
+          'Location': `${appUrl}#${hashParams}`,
         },
       });
     } else {
       // Fallback: redirect to the app homepage
-      const appUrl = 'https://a40028af-14d4-4078-a89d-803b3a984f7d.lovableproject.com/';
       return new Response(null, {
         status: 302,
         headers: {
