@@ -114,9 +114,11 @@ serve(async (req) => {
     }
 
     // Generate session token
+    const appUrl = 'https://a40028af-14d4-4078-a89d-803b3a984f7d.lovableproject.com/';
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: profile.email,
+      redirectTo: appUrl,
     });
 
     if (sessionError) {
