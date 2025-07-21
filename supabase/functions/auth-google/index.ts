@@ -17,7 +17,7 @@ serve(async (req) => {
       throw new Error('Google Client ID not configured');
     }
 
-    const redirectUri = `https://bqazfwlwlatzmaibbvrr.supabase.co/functions/v1/gmail-oauth`;
+    const redirectUri = `${req.headers.get('origin') || 'https://a40028af-14d4-4078-a89d-803b3a984f7d.lovableproject.com'}/auth/callback`;
     const scope = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
     
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +

@@ -14,35 +14,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("inbox");
 
   useEffect(() => {
-    const handleAuth = async () => {
-      // Check if we have auth tokens in the URL hash
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      const expiresIn = hashParams.get('expires_in');
-      const tokenType = hashParams.get('token_type');
-
-      if (accessToken && refreshToken) {
-        console.log('Found auth tokens in URL hash, setting session...');
-        try {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-          
-          if (error) {
-            console.error('Error setting session:', error);
-          } else {
-            console.log('Session set successfully:', data);
-            // Clear the hash from URL
-            window.history.replaceState(null, '', window.location.pathname);
-          }
-        } catch (error) {
-          console.error('Error processing auth tokens:', error);
-        }
-      }
-    };
-
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -53,14 +24,12 @@ const Index = () => {
       }
     );
 
-    // Handle auth tokens first, then check for existing session
-    handleAuth().then(() => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('Initial session check:', session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
