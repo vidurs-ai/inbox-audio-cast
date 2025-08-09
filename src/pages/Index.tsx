@@ -1,16 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoginScreen } from "@/components/LoginScreen";
 import { TabNavigation } from "@/components/TabNavigation";
 import { InboxView } from "@/components/InboxView";
 import { QueueView } from "@/components/QueueView";
 import { SettingsView } from "@/components/SettingsView";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [activeTab, setActiveTab] = useState("inbox");
 
-  if (!isAuthenticated) {
-    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  useEffect(() => {
+    // Listen for auth changes first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => {
+      setSession(s);
+    });
+
+    // Then get current session
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (!session) {
+    return <LoginScreen />;
   }
 
   const renderActiveView = () => {

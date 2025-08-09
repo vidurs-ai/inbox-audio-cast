@@ -1,11 +1,41 @@
 import { Button } from "@/components/ui/button";
 import { Mail, Play } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
-interface LoginScreenProps {
-  onLogin: () => void;
-}
+export const LoginScreen = () => {
+  const { toast } = useToast();
 
-export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
+  const handleGoogleSignIn = async () => {
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const scopes = [
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "openid",
+    ].join(" ");
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        scopes,
+        queryParams: { access_type: "offline", prompt: "consent" },
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    if (data?.url) {
+      window.open(data.url, "_blank", "noopener,noreferrer");
+      toast({ title: "Continue in new tab", description: "Finish Google sign-in, you'll be redirected back." });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-8 text-center">
@@ -30,7 +60,7 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
         {/* Login Button */}
         <div className="space-y-4">
           <Button
-            onClick={onLogin}
+            onClick={handleGoogleSignIn}
             className="w-full h-12 text-base font-medium rounded-xl"
             size="lg"
           >
