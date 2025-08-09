@@ -11,6 +11,63 @@ export class TTSService {
   private static _isPlaying: boolean = false;
   private static currentText: string = '';
 
+  // Playback/time tracking (for progress estimation)
+  private static startTimeMs: number = 0;
+  private static pauseStartMs: number | null = null;
+  private static pausedAccumulatedMs: number = 0;
+  private static estimatedDurationMs: number = 0;
+  private static canceled: boolean = false;
+  private static utterances: SpeechSynthesisUtterance[] = [];
+  private static settingsCache: TTSSettings | null = null;
+
+  private static async awaitVoicesReady(): Promise<void> {
+    return new Promise((resolve) => {
+      const existing = speechSynthesis.getVoices();
+      if (existing.length > 0) return resolve();
+      const handler = () => {
+        speechSynthesis.removeEventListener('voiceschanged', handler);
+        resolve();
+      };
+      speechSynthesis.addEventListener('voiceschanged', handler);
+      // Trigger voice loading
+      speechSynthesis.getVoices();
+    });
+  }
+
+  private static splitTextIntoChunks(text: string, maxLen = 220): string[] {
+    const sentences = text
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+/);
+
+    const chunks: string[] = [];
+    let current = '';
+
+    for (const sentence of sentences) {
+      if ((current + ' ' + sentence).trim().length <= maxLen) {
+        current = (current ? current + ' ' : '') + sentence;
+      } else {
+        if (current) chunks.push(current);
+        if (sentence.length <= maxLen) {
+          current = sentence;
+        } else {
+          // Hard split very long sentences
+          for (let i = 0; i < sentence.length; i += maxLen) {
+            chunks.push(sentence.slice(i, i + maxLen));
+          }
+          current = '';
+        }
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+  }
+
+  private static estimateDurationMs(text: string, rate: number): number {
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    const baseWpm = 170; // average speech rate
+    const seconds = (words / (baseWpm * (rate || 1))) * 60;
+    return Math.max(1, seconds) * 1000;
+  }
   static saveApiKey(apiKey: string): void {
     localStorage.setItem(this.API_KEY_STORAGE_KEY, apiKey);
   }
@@ -37,44 +94,58 @@ export class TTSService {
       throw new Error('Speech synthesis not supported in this browser');
     }
 
-    this.currentText = text;
-    this.utterance = new SpeechSynthesisUtterance(text);
-    
-    // Configure voice settings
-    this.utterance.rate = settings.rate;
-    this.utterance.pitch = settings.pitch;
-    this.utterance.volume = settings.volume;
-
-    // Try to find the requested voice
-    const voices = speechSynthesis.getVoices();
-    if (voices.length > 0 && settings.voice !== 'default') {
-      const selectedVoice = voices.find(voice => voice.name === settings.voice);
-      if (selectedVoice) {
-        this.utterance.voice = selectedVoice;
-      }
+    // Cancel any ongoing playback
+    if (speechSynthesis.speaking || speechSynthesis.pending) {
+      speechSynthesis.cancel();
     }
 
-    return new Promise((resolve, reject) => {
-      if (!this.utterance) {
-        reject(new Error('Failed to create speech utterance'));
-        return;
-      }
+    await this.awaitVoicesReady();
 
-      this.utterance.onstart = () => {
-        this._isPlaying = true;
-      };
+    this.currentText = text;
+    this.settingsCache = settings;
 
-      this.utterance.onend = () => {
+    const chunks = this.splitTextIntoChunks(text);
+    this.estimatedDurationMs = chunks.reduce((acc, c) => acc + this.estimateDurationMs(c, settings.rate), 0);
+    this.startTimeMs = performance.now();
+    this.pausedAccumulatedMs = 0;
+    this.pauseStartMs = null;
+    this.canceled = false;
+    this._isPlaying = true;
+
+    const voices = speechSynthesis.getVoices();
+    const selectedVoice = (voices.length > 0 && settings.voice !== 'default')
+      ? voices.find(v => v.name === settings.voice) ?? null
+      : null;
+
+    this.utterances = [];
+
+    const speakChunk = (chunk: string) => new Promise<void>((resolve, reject) => {
+      const u = new SpeechSynthesisUtterance(chunk);
+      u.rate = settings.rate;
+      u.pitch = settings.pitch;
+      u.volume = settings.volume;
+      if (selectedVoice) u.voice = selectedVoice;
+
+      u.onend = () => resolve();
+      u.onerror = (e) => reject((e as any).error || e);
+
+      this.utterance = u;
+      this.utterances.push(u);
+      speechSynthesis.speak(u);
+    });
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        for (const chunk of chunks) {
+          if (this.canceled) throw new Error('Playback canceled');
+          await speakChunk(chunk);
+        }
         this._isPlaying = false;
         resolve();
-      };
-
-      this.utterance.onerror = (error) => {
+      } catch (err) {
         this._isPlaying = false;
-        reject(error);
-      };
-
-      speechSynthesis.speak(this.utterance);
+        reject(err as any);
+      }
     });
   }
 
@@ -84,32 +155,46 @@ export class TTSService {
   }
 
   static pauseAudio(): void {
-    if (speechSynthesis.speaking) {
+    if (speechSynthesis.speaking && !speechSynthesis.paused) {
       speechSynthesis.pause();
+      this.pauseStartMs = performance.now();
     }
   }
 
   static resumeAudio(): void {
     if (speechSynthesis.paused) {
       speechSynthesis.resume();
+      if (this.pauseStartMs != null) {
+        this.pausedAccumulatedMs += performance.now() - this.pauseStartMs;
+        this.pauseStartMs = null;
+      }
     }
   }
 
   static stopAudio(): void {
-    if (speechSynthesis.speaking) {
+    if (speechSynthesis.speaking || speechSynthesis.pending) {
       speechSynthesis.cancel();
-      this._isPlaying = false;
     }
+    this._isPlaying = false;
+    this.canceled = true;
+    this.startTimeMs = 0;
+    this.pauseStartMs = null;
+    this.pausedAccumulatedMs = 0;
+    this.estimatedDurationMs = 0;
   }
 
   static getCurrentTime(): number {
-    // Web Speech API doesn't provide current time
-    return 0;
+    if (!this.startTimeMs) return 0;
+    const now = performance.now();
+    const effectiveNow = this.pauseStartMs != null ? this.pauseStartMs : now;
+    let elapsedMs = effectiveNow - this.startTimeMs - this.pausedAccumulatedMs;
+    if (elapsedMs < 0) elapsedMs = 0;
+    const clamped = Math.min(this.estimatedDurationMs, elapsedMs);
+    return clamped / 1000;
   }
 
   static getDuration(): number {
-    // Web Speech API doesn't provide duration
-    return 0;
+    return this.estimatedDurationMs / 1000;
   }
 
   static setCurrentTime(time: number): void {

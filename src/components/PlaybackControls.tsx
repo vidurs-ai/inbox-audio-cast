@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Play, Pause, SkipBack, SkipForward, Loader2 } from "lucide-react";
 import { useAudioStore } from "@/stores/audioStore";
-
+import { useToast } from "@/components/ui/use-toast";
 export const PlaybackControls = () => {
   const { 
     isPlaying, 
@@ -15,6 +15,7 @@ export const PlaybackControls = () => {
     playPrevious, 
     seekTo 
   } = useAudioStore();
+  const { toast } = useToast();
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -41,18 +42,18 @@ export const PlaybackControls = () => {
           value={duration ? (progress / duration) * 100 : 0} 
           className="w-full cursor-pointer"
           onClick={(e) => {
+            // Seeking is not supported with the Web Speech API
             if (duration) {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const clickX = e.clientX - rect.left;
-              const percentage = clickX / rect.width;
-              const newTime = percentage * duration;
-              handleSeek([newTime]);
+              toast({
+                title: "Seeking not supported",
+                description: "Speech playback can't seek in this browser.",
+              });
             }
           }}
         />
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatTime(progress)}</span>
-          <span>{formatTime(duration)}</span>
+          <span>{formatTime(Math.max(0, progress))}</span>
+          <span>{formatTime(Math.max(0, duration))}</span>
         </div>
       </div>
       
