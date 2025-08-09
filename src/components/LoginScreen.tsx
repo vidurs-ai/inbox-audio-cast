@@ -6,25 +6,6 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
-  const handleGoogleLogin = async () => {
-    try {
-      // Get the auth URL from our edge function
-      const response = await fetch(`https://bqazfwlwlatzmaibbvrr.supabase.co/functions/v1/auth-google`, {
-        method: 'GET',
-      });
-
-      const data = await response.json();
-      
-      if (data.authUrl) {
-        window.location.href = data.authUrl;
-      } else {
-        throw new Error('Failed to get auth URL');
-      }
-    } catch (error) {
-      console.error('Error initiating Google auth:', error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-8 text-center">
@@ -49,11 +30,11 @@ export const LoginScreen = ({ onLogin }: LoginScreenProps) => {
         {/* Login Button */}
         <div className="space-y-4">
           <Button
-            onClick={handleGoogleLogin}
+            onClick={onLogin}
             className="w-full h-12 text-base font-medium rounded-xl"
             size="lg"
           >
-            Continue with Gmail
+            Continue with Google
           </Button>
           
           <p className="text-sm text-muted-foreground px-4">
