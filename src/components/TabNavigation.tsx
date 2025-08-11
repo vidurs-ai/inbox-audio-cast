@@ -1,4 +1,4 @@
-import { Inbox, List, Settings } from "lucide-react";
+import { Inbox, List, Settings, BookOpen } from "lucide-react";
 
 interface TabNavigationProps {
   activeTab: string;
@@ -9,6 +9,7 @@ export const TabNavigation = ({ activeTab, onTabChange }: TabNavigationProps) =>
   const tabs = [
     { id: "inbox", label: "Inbox", icon: Inbox },
     { id: "queue", label: "Queue", icon: List },
+    { id: "read", label: "Read", icon: BookOpen },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 

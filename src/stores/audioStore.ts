@@ -13,6 +13,7 @@ interface AudioState {
   isPlaying: boolean;
   currentEmailId: string | null;
   queue: Email[];
+  readEmails: Email[];
   currentIndex: number;
   progress: number;
   duration: number;
@@ -33,6 +34,7 @@ interface AudioActions {
   setVoice: (voice: string) => void;
   updateProgress: () => void;
   playEmail: (email: Email) => void;
+  finishCurrentAndContinue: () => Promise<void>;
   clearQueue: () => void;
 }
 
@@ -41,6 +43,7 @@ export const useAudioStore = create<AudioState & AudioActions>((set, get) => ({
   isPlaying: false,
   currentEmailId: null,
   queue: [],
+  readEmails: [],
   currentIndex: 0,
   progress: 0,
   duration: 0,
@@ -126,7 +129,8 @@ export const useAudioStore = create<AudioState & AudioActions>((set, get) => ({
 
   playEmail: async (email) => {
     const state = get();
-    set({ isLoading: true, currentEmailId: email.id });
+    const idx = state.queue.findIndex((e) => e.id === email.id);
+    set({ isLoading: true, currentEmailId: email.id, currentIndex: idx >= 0 ? idx : state.currentIndex });
 
     try {
       const emailText = `Email from ${email.sender}. Subject: ${email.subject}. ${email.content}`;
@@ -140,15 +144,36 @@ export const useAudioStore = create<AudioState & AudioActions>((set, get) => ({
           get().updateProgress();
         } else {
           clearInterval(progressInterval);
-          set({ isPlaying: false });
-          // Auto-play next email
-          get().playNext();
+          get().finishCurrentAndContinue();
         }
       }, 1000);
 
     } catch (error) {
       console.error('Error playing email:', error);
       set({ isLoading: false, isPlaying: false });
+    }
+  },
+
+  finishCurrentAndContinue: async () => {
+    const state = get();
+    const currentIdx = state.currentIndex;
+    const current = state.queue[currentIdx];
+    if (!current) {
+      set({ isPlaying: false });
+      return;
+    }
+    const newQueue = state.queue.filter((_, i) => i !== currentIdx);
+    const nextIndex = currentIdx;
+    const nextEmail = newQueue[nextIndex];
+    set({
+      queue: newQueue,
+      readEmails: [...state.readEmails, { ...current, isRead: true }],
+      currentIndex: Math.max(0, Math.min(nextIndex, newQueue.length - 1)),
+      currentEmailId: nextEmail ? nextEmail.id : null,
+      isPlaying: false,
+    });
+    if (nextEmail) {
+      await get().playEmail(nextEmail);
     }
   },
 

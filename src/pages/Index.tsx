@@ -4,6 +4,7 @@ import { TabNavigation } from "@/components/TabNavigation";
 import { InboxView } from "@/components/InboxView";
 import { QueueView } from "@/components/QueueView";
 import { SettingsView } from "@/components/SettingsView";
+import { ReadView } from "@/components/ReadView";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import { AppHeader } from "@/components/AppHeader";
@@ -34,6 +35,8 @@ const Index = () => {
         return <InboxView />;
       case "queue":
         return <QueueView />;
+      case "read":
+        return <ReadView />;
       case "settings":
         return <SettingsView />;
       default:

@@ -20,7 +20,7 @@ export async function listUnreadEmails(accessToken: string, maxResults = 20): Pr
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   const listRes = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=${encodeURIComponent("is:unread")}`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=${encodeURIComponent("in:inbox is:unread category:primary")}`,
     { headers }
   );
   if (!listRes.ok) {
