@@ -103,3 +103,16 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Utilities for elegant Apple-like feel */
+@layer utilities {
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border;
+  }
+  .shadow-elegant {
+    box-shadow: 0 12px 30px -12px hsl(var(--foreground) / 0.15);
+  }
+}

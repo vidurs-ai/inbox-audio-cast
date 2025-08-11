@@ -13,24 +13,28 @@ export const TabNavigation = ({ activeTab, onTabChange }: TabNavigationProps) =>
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
-      <div className="flex items-center justify-around py-2">
+    <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/70 supports-[backdrop-filter]:backdrop-blur-xl">
+      <div className="max-w-xl mx-auto flex items-center justify-around py-3 px-2 pb-[calc(env(safe-area-inset-bottom))]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          
+
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center space-y-1 py-2 px-4 rounded-lg transition-colors ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex flex-col items-center py-2 px-5 rounded-2xl transition-colors hover-scale ${
                 isActive
                   ? "text-primary bg-primary/10"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{tab.label}</span>
+              <Icon className="h-6 w-6" />
+              <span className="text-[11px] font-medium mt-1">{tab.label}</span>
+              {isActive && (
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
+              )}
             </button>
           );
         })}

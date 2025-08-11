@@ -6,6 +6,7 @@ import { QueueView } from "@/components/QueueView";
 import { SettingsView } from "@/components/SettingsView";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
+import { AppHeader } from "@/components/AppHeader";
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -41,8 +42,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <main className="flex-1 pb-20">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/10 to-background">
+      <AppHeader />
+      <main className="flex-1 pb-24 container mx-auto px-4 pt-4 animate-fade-in">
         {renderActiveView()}
       </main>
       <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
