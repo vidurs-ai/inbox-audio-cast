@@ -117,36 +117,54 @@ export class TTSService {
       ? voices.find(v => v.name === settings.voice) ?? null
       : null;
 
-    this.utterances = [];
-
-    const speakChunk = (chunk: string) => new Promise<void>((resolve, reject) => {
+    // Prepare utterances
+    this.utterances = chunks.map((chunk) => {
       const u = new SpeechSynthesisUtterance(chunk);
       u.rate = settings.rate;
       u.pitch = settings.pitch;
       u.volume = settings.volume;
       if (selectedVoice) u.voice = selectedVoice;
+      return u;
+    });
 
-      u.onend = () => resolve();
-      u.onerror = (e) => reject((e as any).error || e);
+    // Chain playback across chunks and return immediately
+    const speakAtIndex = (index: number) => {
+      if (this.canceled) {
+        this._isPlaying = false;
+        return;
+      }
+      const u = this.utterances[index];
+      if (!u) {
+        this._isPlaying = false;
+        return;
+      }
+
+      u.onend = () => {
+        if (this.canceled) {
+          this._isPlaying = false;
+          return;
+        }
+        const next = index + 1;
+        if (next < this.utterances.length) {
+          // Continue with next chunk without flipping _isPlaying
+          speakAtIndex(next);
+        } else {
+          // Finished all chunks
+          this._isPlaying = false;
+        }
+      };
+
+      u.onerror = () => {
+        this._isPlaying = false;
+      };
 
       this.utterance = u;
-      this.utterances.push(u);
       speechSynthesis.speak(u);
-    });
+    };
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        for (const chunk of chunks) {
-          if (this.canceled) throw new Error('Playback canceled');
-          await speakChunk(chunk);
-        }
-        this._isPlaying = false;
-        resolve();
-      } catch (err) {
-        this._isPlaying = false;
-        reject(err as any);
-      }
-    });
+    // Kick off playback and resolve immediately (do not await completion)
+    speakAtIndex(0);
+    return Promise.resolve();
   }
 
   static async playAudio(): Promise<void> {

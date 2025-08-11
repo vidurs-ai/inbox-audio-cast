@@ -132,7 +132,7 @@ export const useAudioStore = create<AudioState & AudioActions>((set, get) => ({
       const emailText = `Email from ${email.sender}. Subject: ${email.subject}. ${email.content}`;
       await TTSService.generateSpeech(emailText, state.settings);
       
-      set({ isPlaying: true, isLoading: false });
+      set({ isPlaying: true, isLoading: false, progress: 0, duration: TTSService.getDuration() });
 
       // Start progress tracking
       const progressInterval = setInterval(() => {
