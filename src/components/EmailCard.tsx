@@ -9,6 +9,7 @@ interface Email {
   senderEmail: string;
   subject: string;
   preview: string;
+  fullContent?: string;
   timestamp: string;
   isUnread: boolean;
 }
@@ -27,7 +28,7 @@ export const EmailCard = ({ email, onClick }: EmailCardProps) => {
       id: email.id,
       sender: email.sender,
       subject: email.subject,
-      content: email.preview,
+      content: email.fullContent || email.preview,
       isRead: false
     };
     playEmail(emailData);
@@ -39,7 +40,7 @@ export const EmailCard = ({ email, onClick }: EmailCardProps) => {
       id: email.id,
       sender: email.sender,
       subject: email.subject,
-      content: email.preview,
+      content: email.fullContent || email.preview,
       isRead: false
     };
     addToQueue(emailData);

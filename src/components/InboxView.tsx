@@ -32,7 +32,7 @@ export const InboxView = () => {
   const unreadCount = emails?.length ?? 0;
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 relative">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Inbox</h1>
         <span className="text-sm text-muted-foreground">
@@ -40,23 +40,27 @@ export const InboxView = () => {
         </span>
       </div>
       
-      {selectedEmail ? (
-        <EmailPreview 
-          email={selectedEmail} 
-          onClose={() => setSelectedEmail(null)} 
-        />
-      ) : (
-        <div className="space-y-3">
-          {(emails ?? []).map((email) => (
-            <EmailCard 
-              key={email.id} 
-              email={email} 
-              onClick={() => setSelectedEmail(email)}
+      <div className="space-y-3">
+        {(emails ?? []).map((email) => (
+          <EmailCard 
+            key={email.id} 
+            email={email} 
+            onClick={() => setSelectedEmail(email)}
+          />
+        ))}
+        {emails !== null && emails.length === 0 && (
+          <p className="text-muted-foreground text-sm">No unread messages found.</p>
+        )}
+      </div>
+
+      {selectedEmail && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden">
+            <EmailPreview 
+              email={selectedEmail} 
+              onClose={() => setSelectedEmail(null)} 
             />
-          ))}
-          {emails !== null && emails.length === 0 && (
-            <p className="text-muted-foreground text-sm">No unread messages found.</p>
-          )}
+          </div>
         </div>
       )}
     </div>

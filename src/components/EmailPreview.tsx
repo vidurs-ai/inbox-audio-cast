@@ -17,7 +17,7 @@ export const EmailPreview = ({ email, onClose }: EmailPreviewProps) => {
       id: email.id,
       sender: email.sender,
       subject: email.subject,
-      content: email.preview,
+      content: email.fullContent || email.preview,
       isRead: false
     };
     playEmail(emailData);
@@ -28,7 +28,7 @@ export const EmailPreview = ({ email, onClose }: EmailPreviewProps) => {
       id: email.id,
       sender: email.sender,
       subject: email.subject,
-      content: email.preview,
+      content: email.fullContent || email.preview,
       isRead: false
     };
     addToQueue(emailData);
@@ -55,9 +55,9 @@ export const EmailPreview = ({ email, onClose }: EmailPreviewProps) => {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="prose prose-sm max-w-none">
+        <div className="prose prose-sm max-w-none max-h-96 overflow-y-auto">
           <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-            {email.preview}
+            {email.fullContent || email.preview}
           </p>
         </div>
         

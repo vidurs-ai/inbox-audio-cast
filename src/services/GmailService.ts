@@ -4,6 +4,7 @@ export interface GmailEmail {
   senderEmail: string;
   subject: string;
   preview: string;
+  fullContent: string;
   timestamp: string;
   isUnread: boolean;
 }
@@ -16,11 +17,39 @@ function parseFrom(from: string): { name: string; email: string } {
   return { name: from, email: from };
 }
 
+function extractTextFromPayload(payload: any): string {
+  let text = '';
+  
+  if (payload.body?.data) {
+    try {
+      text += atob(payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+    } catch (e) {
+      // Ignore decode errors
+    }
+  }
+  
+  if (payload.parts) {
+    for (const part of payload.parts) {
+      if (part.mimeType === 'text/plain' && part.body?.data) {
+        try {
+          text += atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+        } catch (e) {
+          // Ignore decode errors
+        }
+      } else if (part.parts) {
+        text += extractTextFromPayload(part);
+      }
+    }
+  }
+  
+  return text;
+}
+
 export async function listUnreadEmails(accessToken: string, maxResults = 20): Promise<GmailEmail[]> {
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   const listRes = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=${encodeURIComponent("in:inbox is:unread category:primary")}`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=${encodeURIComponent("in:inbox is:unread (category:primary OR category:updates)")}`,
     { headers }
   );
   if (!listRes.ok) {
@@ -31,7 +60,7 @@ export async function listUnreadEmails(accessToken: string, maxResults = 20): Pr
   if (ids.length === 0) return [];
 
   const detailPromises = ids.map(async (id) => {
-    const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`;
+    const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`;
     const res = await fetch(url, { headers });
     if (!res.ok) throw new Error(`Failed message ${id}: ${res.status}`);
     return res.json();
@@ -47,6 +76,8 @@ export async function listUnreadEmails(accessToken: string, maxResults = 20): Pr
     const { name, email } = parseFrom(fromRaw);
 
     const timestamp = dateRaw ? new Date(dateRaw).toLocaleString() : new Date(Number(d.internalDate)).toLocaleString();
+    
+    const fullContent = extractTextFromPayload(d.payload) || d.snippet || "";
 
     return {
       id: d.id,
@@ -54,6 +85,7 @@ export async function listUnreadEmails(accessToken: string, maxResults = 20): Pr
       senderEmail: email,
       subject,
       preview: d.snippet ?? "",
+      fullContent,
       timestamp,
       isUnread: true,
     } as GmailEmail;
