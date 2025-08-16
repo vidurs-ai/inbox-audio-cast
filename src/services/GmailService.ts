@@ -118,3 +118,28 @@ export async function listUnreadEmails(accessToken: string, maxResults = 20): Pr
     } as GmailEmail;
   });
 }
+
+export async function processEmailWithAI(emailContent: string, subject: string, sender: string): Promise<string> {
+  try {
+    // Use dynamic import to avoid potential build issues
+    const { supabase } = await import('../integrations/supabase/client');
+    
+    const response = await supabase.functions.invoke('process-email-with-ai', {
+      body: {
+        emailContent,
+        subject,
+        sender
+      }
+    });
+
+    if (response.error) {
+      console.error('AI processing error:', response.error);
+      return emailContent; // Fallback to original content
+    }
+
+    return response.data?.processedContent || emailContent;
+  } catch (error) {
+    console.error('Error processing email with AI:', error);
+    return emailContent; // Fallback to original content
+  }
+}

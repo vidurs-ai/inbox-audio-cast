@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Play, Plus } from "lucide-react";
-import { GmailEmail } from "@/services/GmailService";
+import { X, Play, Plus, Sparkles } from "lucide-react";
+import { GmailEmail, processEmailWithAI } from "@/services/GmailService";
 import { useAudioStore } from "@/stores/audioStore";
+import { useState, useEffect } from "react";
 
 interface EmailPreviewProps {
   email: GmailEmail;
@@ -11,13 +12,41 @@ interface EmailPreviewProps {
 
 export const EmailPreview = ({ email, onClose }: EmailPreviewProps) => {
   const { addToQueue, playEmail } = useAudioStore();
+  const [processedContent, setProcessedContent] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    const processEmail = async () => {
+      if (email.fullContent && email.fullContent.length > 200) {
+        setIsProcessing(true);
+        try {
+          const processed = await processEmailWithAI(
+            email.fullContent,
+            email.subject,
+            email.sender
+          );
+          setProcessedContent(processed);
+        } catch (error) {
+          console.error('Failed to process email:', error);
+        } finally {
+          setIsProcessing(false);
+        }
+      }
+    };
+
+    processEmail();
+  }, [email.fullContent, email.subject, email.sender]);
+
+  const getEmailContent = () => {
+    return processedContent || email.fullContent || email.preview;
+  };
 
   const handlePlayNow = () => {
     const emailData = {
       id: email.id,
       sender: email.sender,
       subject: email.subject,
-      content: email.fullContent || email.preview,
+      content: getEmailContent(),
       isRead: false
     };
     playEmail(emailData);
@@ -28,7 +57,7 @@ export const EmailPreview = ({ email, onClose }: EmailPreviewProps) => {
       id: email.id,
       sender: email.sender,
       subject: email.subject,
-      content: email.fullContent || email.preview,
+      content: getEmailContent(),
       isRead: false
     };
     addToQueue(emailData);
@@ -55,9 +84,21 @@ export const EmailPreview = ({ email, onClose }: EmailPreviewProps) => {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
+        {processedContent && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span>AI-enhanced content</span>
+          </div>
+        )}
+        {isProcessing && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <Sparkles className="h-4 w-4 animate-spin text-primary" />
+            <span>Processing with AI...</span>
+          </div>
+        )}
         <div className="prose prose-sm max-w-none max-h-96 overflow-y-auto">
           <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-            {email.fullContent || email.preview}
+            {getEmailContent()}
           </p>
         </div>
         
