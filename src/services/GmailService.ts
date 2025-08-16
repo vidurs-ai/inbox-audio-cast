@@ -17,12 +17,34 @@ function parseFrom(from: string): { name: string; email: string } {
   return { name: from, email: from };
 }
 
+function stripHtmlTags(html: string): string {
+  // Remove HTML tags and decode HTML entities
+  return html
+    .replace(/<style[^>]*>.*?<\/style>/gis, '') // Remove style blocks
+    .replace(/<script[^>]*>.*?<\/script>/gis, '') // Remove script blocks
+    .replace(/<[^>]*>/g, ' ') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+    .replace(/&amp;/g, '&') // Replace HTML entities
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
+    .trim();
+}
+
 function extractTextFromPayload(payload: any): string {
   let text = '';
   
   if (payload.body?.data) {
     try {
-      text += atob(payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+      const decoded = atob(payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+      // Check if it's HTML content
+      if (payload.mimeType === 'text/html' || decoded.includes('<html') || decoded.includes('<!DOCTYPE')) {
+        text += stripHtmlTags(decoded);
+      } else {
+        text += decoded;
+      }
     } catch (e) {
       // Ignore decode errors
     }
@@ -30,9 +52,14 @@ function extractTextFromPayload(payload: any): string {
   
   if (payload.parts) {
     for (const part of payload.parts) {
-      if (part.mimeType === 'text/plain' && part.body?.data) {
+      if (part.body?.data) {
         try {
-          text += atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+          const decoded = atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+          if (part.mimeType === 'text/html' || decoded.includes('<html') || decoded.includes('<!DOCTYPE')) {
+            text += stripHtmlTags(decoded);
+          } else if (part.mimeType === 'text/plain') {
+            text += decoded;
+          }
         } catch (e) {
           // Ignore decode errors
         }
@@ -42,7 +69,7 @@ function extractTextFromPayload(payload: any): string {
     }
   }
   
-  return text;
+  return text.trim();
 }
 
 export async function listUnreadEmails(accessToken: string, maxResults = 20): Promise<GmailEmail[]> {
