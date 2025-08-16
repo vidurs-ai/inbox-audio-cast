@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { EmailCard } from "@/components/EmailCard";
+import { EmailPreview } from "@/components/EmailPreview";
 import { supabase } from "@/integrations/supabase/client";
 import { listUnreadEmails, type GmailEmail } from "@/services/GmailService";
 import { useToast } from "@/components/ui/use-toast";
 
 export const InboxView = () => {
   const [emails, setEmails] = useState<GmailEmail[] | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<GmailEmail | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,14 +40,25 @@ export const InboxView = () => {
         </span>
       </div>
       
-      <div className="space-y-3">
-        {(emails ?? []).map((email) => (
-          <EmailCard key={email.id} email={email} />
-        ))}
-        {emails !== null && emails.length === 0 && (
-          <p className="text-muted-foreground text-sm">No unread messages found.</p>
-        )}
-      </div>
+      {selectedEmail ? (
+        <EmailPreview 
+          email={selectedEmail} 
+          onClose={() => setSelectedEmail(null)} 
+        />
+      ) : (
+        <div className="space-y-3">
+          {(emails ?? []).map((email) => (
+            <EmailCard 
+              key={email.id} 
+              email={email} 
+              onClick={() => setSelectedEmail(email)}
+            />
+          ))}
+          {emails !== null && emails.length === 0 && (
+            <p className="text-muted-foreground text-sm">No unread messages found.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

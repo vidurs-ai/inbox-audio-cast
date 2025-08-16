@@ -15,12 +15,14 @@ interface Email {
 
 interface EmailCardProps {
   email: Email;
+  onClick?: () => void;
 }
 
-export const EmailCard = ({ email }: EmailCardProps) => {
+export const EmailCard = ({ email, onClick }: EmailCardProps) => {
   const { addToQueue, playEmail } = useAudioStore();
 
-  const handlePlayNow = () => {
+  const handlePlayNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const emailData = {
       id: email.id,
       sender: email.sender,
@@ -31,7 +33,8 @@ export const EmailCard = ({ email }: EmailCardProps) => {
     playEmail(emailData);
   };
 
-  const handleAddToQueue = () => {
+  const handleAddToQueue = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const emailData = {
       id: email.id,
       sender: email.sender,
@@ -43,7 +46,7 @@ export const EmailCard = ({ email }: EmailCardProps) => {
   };
 
   return (
-    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={onClick}>
       <div className="flex items-start space-x-3">
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between">

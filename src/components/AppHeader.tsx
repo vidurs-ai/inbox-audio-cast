@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mail, Play, Search, Mic, SlidersHorizontal, Bell, User } from "lucide-react";
+import { Mail, Play, Search, User } from "lucide-react";
 
 export const AppHeader = () => {
   return (
@@ -30,38 +29,12 @@ export const AppHeader = () => {
           </div>
         </div>
 
-        {/* Actions (placeholders) */}
+        {/* Actions */}
         <div className="flex items-center gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" aria-disabled className="rounded-full">
-                  <Mic className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Voice control (coming soon)</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" aria-disabled className="rounded-full">
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Smart filters (coming soon)</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" aria-disabled className="rounded-full">
-                  <Bell className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Notifications (coming soon)</TooltipContent>
-            </Tooltip>
-            <Button variant="outline" size="sm" className="rounded-full pl-2 pr-3">
-              <User className="h-4 w-4 mr-2" />
-              Profile
-            </Button>
-          </TooltipProvider>
+          <Button variant="outline" size="sm" className="rounded-full pl-2 pr-3">
+            <User className="h-4 w-4 mr-2" />
+            Profile
+          </Button>
         </div>
       </div>
     </header>
